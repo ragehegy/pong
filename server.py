@@ -53,10 +53,7 @@ def threaded_client(conn):
     conn.close()
 
 while True:
-    if current_players == 1:
-        continue
     conn, addr = s.accept()
     print("Connected to: ", addr)
-    current_players += 1
 
     start_new_thread(threaded_client, (conn,))

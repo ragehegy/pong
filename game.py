@@ -76,7 +76,7 @@ class Ball:
         if self.dbo == "right":
             self.x += self.velocity
 
-    def collision(self, player1: Player, player2: Player, players: [Player]=[]) -> None:
+    def collision(self, players: [Player]=[]) -> None:
         global scorep1, scorep2    
         
         for player in players:
@@ -86,7 +86,6 @@ class Ball:
                         if self.y >= player.y and  self.y < player.y + player.height:
                             self.dbo = "right"
                         else:
-                            sleep(2)
                             self.x, self.y = 300, random.randint(0, 300)
                             scorep2 += 10
                             pygame.display.set_caption("My game" + "Score player 1: " + str(scorep1) + " - Score player 2: " + str(scorep2))
@@ -95,7 +94,6 @@ class Ball:
                         if self.y >= player.y and  self.y < player.y + player.height:
                             self.dbo = "left"		
                         else:
-                            sleep(2)
                             self.x, self.y = 300, random.randint(0, 300)
                             scorep1 += 10
                             pygame.display.set_caption("My game" + "Score player 1: " + str(scorep1) + " - Score player 2: " + str(scorep2))
@@ -106,7 +104,6 @@ class Ball:
                         if self.x >= player.x and  self.x < player.x + player.width:
                             self.dbv = "down"
                         else:
-                            sleep(2)
                             self.x, self.y = random.randint(0, 300), 300
                             scorep2 += 10
                             pygame.display.set_caption("My game" + "Score player 1: " + str(scorep1) + " - Score player 2: " + str(scorep2))
@@ -115,7 +112,6 @@ class Ball:
                         if self.x >= player.x and  self.x < player.x + player.width:
                             self.dbv = "up"
                         else:
-                            sleep(2)
                             self.x, self.y = random.randint(0, 300), 300
                             scorep1 += 10
                             pygame.display.set_caption("My game" + "Score player 1: " + str(scorep1) + " - Score player 2: " + str(scorep2))
@@ -132,8 +128,8 @@ class Game:
         self.player = Player(490, 250)
         self.player2 = Player(0, 250)
 
-        self.player3 = Player(250, 490, 1)
-        self.player4 = Player(250, 0, 1)
+        # self.player3 = Player(250, 490, 1)
+        # self.player4 = Player(250, 0, 1)
 
         self.canvas = Canvas(self.width, self.height, "Testing...")
 
@@ -154,30 +150,29 @@ class Game:
             keys = pygame.key.get_pressed()
 
             if keys[pygame.K_RIGHT]:
-                if self.player3.x <= self.width - self.player3.velocity:
-                    self.player3.move(2)
+                if self.player.x <= self.width - self.player.velocity:
+                    self.player.move(2)
 
             if keys[pygame.K_LEFT]:
-                if self.player3.x >= self.player3.velocity:
-                    self.player3.move(3)
+                if self.player.x >= self.player.velocity:
+                    self.player.move(3)
 
             if keys[pygame.K_UP]:
-                if self.player3.x >= self.player3.velocity:
-                    self.player3.move(0)
+                if self.player.x >= self.player.velocity:
+                    self.player.move(0)
 
             if keys[pygame.K_DOWN]:
-                if self.player3.x <= self.width - self.player3.velocity:
-                    self.player3.move(1)
+                if self.player.x <= self.width - self.player.velocity:
+                    self.player.move(1)
 
             self.player2.x, self.player2.y = self.parse_data(self.send_data())
+
             self.canvas.draw_background()
             self.player.draw(self.canvas.get_canvas())
             self.player2.draw(self.canvas.get_canvas())
-            self.player3.draw(self.canvas.get_canvas())
-            self.player4.draw(self.canvas.get_canvas())
             self.ball.draw(self.canvas.get_canvas())
             self.ball.move()
-            self.ball.collision(self.player, self.player2, [self.player, self.player2, self.player3])
+            self.ball.collision([self.player, self.player2])
             self.canvas.update()
 
     def send_data(self):
