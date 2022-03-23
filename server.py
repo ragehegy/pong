@@ -16,41 +16,46 @@ try:
 except socket.error as e:
     print(str(e))
 
-s.listen(2)
+s.listen(4)
 print("Waiting for a connection")
 
-currentId = "0"
-pos = ["0:50,50", "1:100,100"]
+total_players = 0
+
+pos = ["0:490,235", "1:0,235", "2:235,490", "3:235,0"]
+
 def threaded_client(conn):
-    global currentId, pos
-    conn.send(str.encode(currentId))
-    currentId = "1"
-    reply = ''
-    while True:
-        try:
-            data = conn.recv(2048)
-            reply = data.decode('utf-8')
-            if not data:
-                conn.send(str.encode("Goodbye"))
+    global total_players, pos
+    if total_players > 4:
+        reply = "False"
+    else:
+        conn.send(str.encode(pos[total_players]))
+        total_players += 1
+        reply = ''
+        while True:
+            try:
+                data = conn.recv(2048)
+                reply = data.decode('utf-8')
+                if not data:
+                    conn.send(str.encode("Goodbye"))
+                    break
+                else:
+                    # print("Recieved: " + reply)
+                    arr = reply.split(":")
+                    id = int(arr[0])
+                    pos[id] = reply
+                    # print("pos: ", pos)
+
+                    new_pos = [x for i, x in enumerate(pos) if i != id]
+                    reply = "-".join(new_pos)
+
+                # print("Sending: " + reply)
+                conn.sendall(str.encode(reply))
+            except:
                 break
-            else:
-                print("Recieved: " + reply)
-                arr = reply.split(":")
-                id = int(arr[0])
-                pos[id] = reply
 
-                if id == 0: nid = 1
-                if id == 1: nid = 0
-
-                reply = pos[nid][:]
-                print("Sending: " + reply)
-
-            conn.sendall(str.encode(reply))
-        except:
-            break
-
-    print("Connection Closed")
-    conn.close()
+        print("Connection Closed")
+        total_players -= 1
+        conn.close()
 
 while True:
     conn, addr = s.accept()

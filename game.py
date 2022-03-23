@@ -9,14 +9,6 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 
-# Coordinates p1, p2 and ball
-x1, y1 = 490, 250
-x2, y2 = 0, 250
-xb, yb = 300, 300
-
-dbo = 'left'
-dbv = 'down'
-
 scorep1 = 0
 scorep2 = 0
 
@@ -39,9 +31,9 @@ class Player:
 
     def move(self, direction):
         if self.move_dir == 0:
-            if direction == 0 and self.y + self.velocity > 0:
+            if direction == 0 and self.y + self.velocity > 10:
                 self.y -= self.velocity
-            elif direction == 1 and self.y + self.velocity < 500:
+            elif direction == 1 and self.y + self.height < 500:
                 self.y += self.velocity
         if self.move_dir == 1:
             if direction == 2:
@@ -76,7 +68,7 @@ class Ball:
         if self.dbo == "right":
             self.x += self.velocity
 
-    def collision(self, players: [Player]=[]) -> None:
+    def collide(self, players: [Player]=[]) -> None:
         global scorep1, scorep2    
         
         for player in players:
@@ -125,11 +117,24 @@ class Game:
 
         self.ball = Ball(300, 300)
 
-        self.player = Player(490, 250)
-        self.player2 = Player(0, 250)
+        self.client = self.net.connect().split(":")
+        self.net.id = self.client[0]
 
-        # self.player3 = Player(250, 490, 1)
-        # self.player4 = Player(250, 0, 1)
+        pos = tuple([int(x) for x in self.client[1].split(",")])
+        print("init pos: ", pos)
+        self.player = Player(pos[0], pos[1], int(int(self.net.id)>2))
+
+        self.other_players = [
+            Player(490, 235),
+            Player(0, 235),
+            Player(235, 490, 1),
+            Player(235, 0, 1)
+        ]
+
+        # self.player2 = Player(0, 235)
+
+        # self.player3 = Player(235, 490, 1)
+        # self.player4 = Player(235, 0, 1)
 
         self.canvas = Canvas(self.width, self.height, "Testing...")
 
@@ -149,45 +154,65 @@ class Game:
 
             keys = pygame.key.get_pressed()
 
+            if keys[pygame.K_UP]:
+                # if self.player.x <= self.player.velocity:
+                self.player.move(0)
+
+            if keys[pygame.K_DOWN]:
+                # if self.player.x <= self.width - self.player.velocity:
+                self.player.move(1)
+
             if keys[pygame.K_RIGHT]:
-                if self.player.x <= self.width - self.player.velocity:
-                    self.player.move(2)
+                # if self.player.x <= self.width - self.player.velocity:
+                self.player.move(2)
 
             if keys[pygame.K_LEFT]:
                 if self.player.x >= self.player.velocity:
                     self.player.move(3)
 
-            if keys[pygame.K_UP]:
-                if self.player.x >= self.player.velocity:
-                    self.player.move(0)
+            data = self.send_data()
+            if data == "False":
+                print("Waiting...")
+                continue
 
-            if keys[pygame.K_DOWN]:
-                if self.player.x <= self.width - self.player.velocity:
-                    self.player.move(1)
-
-            self.player2.x, self.player2.y = self.parse_data(self.send_data())
-
+            oplayers = self.parse_data(data)
+            if oplayers:
+                for i, oplayer in enumerate(oplayers):
+                    try:
+                        self.other_players[i].x = int(oplayer[0])
+                        self.other_players[i].y = int(oplayer[1])
+                    except:
+                        continue
+                    
             self.canvas.draw_background()
+
             self.player.draw(self.canvas.get_canvas())
-            self.player2.draw(self.canvas.get_canvas())
+            for oplayer in self.other_players:
+                oplayer.draw(self.canvas.get_canvas())
+            # self.player2.draw(self.canvas.get_canvas())
+            # self.player3.draw(self.canvas.get_canvas())
+            # self.player4.draw(self.canvas.get_canvas())
+
             self.ball.draw(self.canvas.get_canvas())
+
             self.ball.move()
-            self.ball.collision([self.player, self.player2])
+            self.ball.collide([self.player, *self.other_players])
+
             self.canvas.update()
 
     def send_data(self):
-        print(self.net.id)
         data = str(self.net.id) + ":" + str(self.player.x) + "," + str(self.player.y)
         reply = self.net.send(data)
         return reply
 
     @staticmethod
     def parse_data(data):
+        pos = data.split("-")
         try:
-            d = data.split(":")[1].split(",")
-            return int(d[0]), int(d[1])
+            pos = list(map(lambda x: x.split(":")[1].split(","), pos))
+            return pos
         except:
-            return 0,0
+            return None
 
 class Canvas:
     def __init__(self, width, height, name=None) -> None:
