@@ -168,6 +168,8 @@ class Game:
             if keys[pygame.K_DOWN]:
                 if self.player3.x <= self.width - self.player3.velocity:
                     self.player3.move(1)
+
+            self.player2.x, self.player2.y = self.parse_data(self.send_data())
             self.canvas.draw_background()
             self.player.draw(self.canvas.get_canvas())
             self.player2.draw(self.canvas.get_canvas())
